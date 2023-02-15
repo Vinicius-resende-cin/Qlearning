@@ -56,21 +56,21 @@ def do_action(q_table:list, state: str, lrate: float, dfactor: float) -> tuple[s
     return new_state, action, reward
 
 
-def generate_policy(lrate: float, dfactor: float, n_times: int, initial_state: str = '0000000'):
+def generate_policy(q_table: list, lrate: float, dfactor: float, n_times: int, initial_state: str = '0000000'):
     """Executa o loop de avançar entre estados n vezes"""
 
-    state, _, _ = do_action(initial_state, lrate, dfactor) # Executa a primeira ação
+    state, _, _ = do_action(q_table, initial_state, lrate, dfactor) # Executa a primeira ação
 
-    # Loop é executado enquanto não alcança um estado final
+    # Loop é executado n_vezes
     for i in range(n_times):
         print(f"Passo {i + 1}:")
-        state, _, _ = do_action(state, lrate, dfactor)
+        state, _, _ = do_action(q_table, state, lrate, dfactor)
 
 
-def explore(lr: float, df: float, n_times: int):
+def explore(q_table:list, lr: float, df: float, n_times: int):
     """Explora o ambiente e atualiza a q_table"""
-    generate_policy(lr, df, n_times)
-    write_table()
+    generate_policy(q_table, lr, df, n_times)
+    write_table(q_table)
 
 
 def apply_policy(q_table: list):
@@ -83,10 +83,10 @@ if __name__ == "__main__":
     mode = int(input("Digite 1 para explorar o ambiente, 0 para executar a política: "))
 
     if mode:
-        learning_rate = input("Digite a taxa de aprendizagem: ")
-        discount_factor = input("Digite o fator de desconto: ")
-        n_times = input("Digite a quantidade de passos: ")
+        learning_rate = float(input("Digite a taxa de aprendizagem: "))
+        discount_factor = float(input("Digite o fator de desconto: "))
+        n_times = int(input("Digite a quantidade de passos: "))
 
-        explore(learning_rate, discount_factor, n_times)
+        explore(q_table, learning_rate, discount_factor, n_times)
     else:
         apply_policy(q_table)
