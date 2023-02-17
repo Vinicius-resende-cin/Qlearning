@@ -6,6 +6,7 @@ port = 2037
 s = cn.connect(port)
 
 action_names = {0: "left", 1: "right", 2: "jump"}
+dir_names = {0: "norte", 1: "leste", 2: "sul", 3: "oeste"}
 
 
 def read_table() -> list:
@@ -50,7 +51,7 @@ def do_action(q_table:list, state: str, randomness: float) -> tuple:
         ][-1] # escolhe a melhor ação
 
     action_name = action_names[action] # converte a ação para string
-    print('{' + f"Estado: {int(state, 2)}, Ação: {action_name}", end='')
+    print('{' + f"Estado: {int(state, 2)} ({int(state[-7:-2], 2)} - {dir_names[int(state[-2:], 2)]}), Ação: {action_name}", end='')
 
     #2 =============================== Observar o novo estado
     new_state, reward = cn.get_state_reward(s, action_name) # recebe novo estado
@@ -73,14 +74,14 @@ def do_and_update(q_table: list, state: str, lrate: float, dfactor: float, rando
     return new_state, reward
 
 
-def generate_policy(q_table: list, lrate: float, dfactor: float, randomness: float, n_times: int, initial_state: str = '0000000'):
+def generate_policy(q_table: list, lrate: float, dfactor: float, randomness: float, n_times: int, initial_state: str = '0000000', step_limit: int = 999):
     """Percorre o ambiente até um estado final n vezes"""
     for i in range(n_times):
         print(f"\nIteração {i + 1}:")
 
         state, reward = do_and_update(q_table, initial_state, lrate, dfactor, randomness) # executa a primeira ação
         counter = 0
-        while reward != 300: # explora até chegar num estado terminal
+        while reward != 300 and counter <= step_limit: # explora até chegar num estado terminal
             counter += 1
             print(f"Passo {counter}:", end=' ')
             state, reward = do_and_update(q_table, state, lrate, dfactor, randomness)
@@ -92,13 +93,17 @@ def explore(q_table:list, lr: float, df: float, rd: float, n_times: int, initial
     write_table(q_table)
 
 
-def apply_policy(q_table: list, initial_state: str = '0000000'):
-    _, _, state, reward = do_action(q_table, initial_state, 0)
-    counter = 0
-    while reward != 300:
-        counter += 1
-        print('}\n' + f"Passo {counter}:", end=' ')
-        _, _, state, reward = do_action(q_table, state, 0)
+def apply_policy(q_table: list, n_times: int, initial_state: str = '0000000'):
+    for i in range(n_times):
+        print(f"\nIteração {i + 1}:")
+
+        _, _, state, reward = do_action(q_table, initial_state, 0)
+        counter = 0
+        while reward != 300:
+            counter += 1
+            print('}\n' + f"Passo {counter}:", end=' ')
+            _, _, state, reward = do_action(q_table, state, 0)
+        print('}\n')
         
 
 if __name__ == "__main__":
@@ -106,14 +111,14 @@ if __name__ == "__main__":
 
     mode = int(input("Digite 1 para explorar o ambiente, 0 para executar a política: "))
 
-    initial_state = '01010' + '00'
-
+    initial_state = '00000' + '00'
+    n_times = int(input("Digite a quantidade de iterações: "))
+    
     if mode:
         learning_rate = float(input("Digite a taxa de aprendizagem: "))
         discount_factor = float(input("Digite o fator de desconto: "))
         randomness = float(input("Digite a frequencia de ações aleatórias: "))
-        n_times = int(input("Digite a quantidade de iterações: "))
 
         explore(q_table, learning_rate, discount_factor, randomness, n_times, initial_state)
     else:
-        apply_policy(q_table, initial_state)
+        apply_policy(q_table, n_times, initial_state)
